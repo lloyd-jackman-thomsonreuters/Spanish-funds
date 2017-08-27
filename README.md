@@ -1,1 +1,3 @@
 # Spanish funds
+
+A script that will go through the listings on the Spanish fund regulator's website, collate the details sotored on the pages, then match using fuzzy logic on the names will match them to stored database fund names and the listed domicile couontries, before then working out where the missing Spanish Registered for Sale status may exist in the database or, conversely, where it may be present without warrant.
