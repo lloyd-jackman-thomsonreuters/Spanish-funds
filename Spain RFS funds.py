@@ -55,7 +55,6 @@ def namematch(fund, umbrella_names):
 if __name__ == '__main__':
     root = "https://www.cnmv.es/Portal/Consultas/"
     fund_details_list = []
-    
     res = requests.get("http://www.cnmv.es/Portal/Consultas/MostrarListados.aspx?id=11&page=0")
     test = bs4.BeautifulSoup(res.text, "lxml")
     for span in test.select('span'):
