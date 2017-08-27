@@ -15,8 +15,6 @@ import threading
 import multiprocessing as mp
 from itertools import repeat
 
-#logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s',)
-
 
 def pullpage(n, fund_details_list):
     res = requests.get("http://www.cnmv.es/Portal/Consultas/MostrarListados.aspx?id=11&page=%s" % str(n))
@@ -61,23 +59,22 @@ if __name__ == '__main__':
         if span.get("id") == "ctl00_ContentPrincipal_wucRelacionRegistros_MF_wucPaginadorRepeater_lblInfoPaginacion":
             text = span.getText()
             max_pages = int(text.split(" ")[-1]) - 1
-    
+
     threads = []
-    
+
     for n in range(0, max_pages):
         t = threading.Thread(target=pullpage, args=(n, fund_details_list))
         threads.append(t)
         t.start()
-    
+
     for t in threads:
         t.join()
-    
+
     labels = ["Link", "Fund Name", "Fund Reg No", "Fund Reg Date", "Fund Type", "Fund Country"]
     cnmv_df = pd.DataFrame.from_records(fund_details_list, columns=labels)
-    #cnmv_df.to_excel("CNMV IIC Details.xlsx", index=False)
-    
+
     conn = qdb5()
-    
+
     umbrellas = pd.read_sql("SELECT DISTINCT F.UMBRELLA_ID, N.NAME, R.ISO3_CODE \
     FROM QDB.FUND F \
     LEFT JOIN QDB.ASSET_NAME N \
@@ -92,25 +89,25 @@ if __name__ == '__main__':
     AND A.ATTRIBUTE_ID = 1350 \
     AND A.ATTRIBUTE_VALUE_ID = 398 \
     AND R.END_DATE > SYSDATE", conn)
-    
+
     conn.close()
-    
+
     matched_names = []
     scores = []
-    
+
     umbrella_names = list(umbrellas["NAME"].unique())
     spain_names = list(cnmv_df["Fund Name"])
-    
+
     pool = mp.Pool()
     result = pool.starmap(namematch, zip(spain_names, repeat(umbrella_names)))
     pool.close()
     pool.join()
-    
+
     for (matched_name, score) in result:
         matched_names.append(matched_name)
         scores.append(score)
-       
+
     cnmv_df["Matched Name"] = np.array(matched_names)
     cnmv_df["Score"] = np.array(scores)
-    
+
     cnmv_df.to_excel("CNMV test.xlsx", index=False)
